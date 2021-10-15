@@ -1,0 +1,21 @@
+name: Logistic Regression Classifier
+description: Trains a Logistic Regression Classifier
+
+inputs:
+- {name: Data, type: GCSPath, description: 'Path where data is stored.'}
+outputs:
+- {name: Accuracy, type: Float, description: 'Accuracy metric'}
+
+implementation:
+  container:
+    image: gcr.io/ideate/gcp-kubeflow-rul:lr
+    command: [
+      python, logistic_regression_rul.py,
+
+      --data,
+      {inputPath: Data},
+
+      --accuracy,
+      {outputPath: Accuracy},
+
+    ]
