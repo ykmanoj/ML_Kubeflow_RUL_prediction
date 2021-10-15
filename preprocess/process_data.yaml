@@ -1,0 +1,21 @@
+name: Process data
+description: Prepares the train & test data and performs scaling
+
+inputs:
+- {name: Input Data, type: GCSPath, description: 'Path where input data is stored.'}
+outputs:
+- {name: Output Data, type: GCSPath, description: 'Path where output data is stored'}
+
+implementation:
+  container:
+    image: gcr.io/ideate/gcp-kubeflow-rul:process_data
+    command: [
+      python, process_data_rul.py,
+
+      --input_data,
+      {inputPath: Input Data},
+
+      --output_data,
+      {outputPath: Output Data},
+
+    ]
