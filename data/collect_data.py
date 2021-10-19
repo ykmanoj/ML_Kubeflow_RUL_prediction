@@ -3,8 +3,8 @@ import json
 import os
 import pandas as pd
 import numpy as np
-from kfp.components import create_component_from_func
-from path import Path
+#from kfp.components import create_component_from_func
+#from path import Path
 
 np.random.seed(1337)
 import requests, zipfile, StringIO
@@ -13,7 +13,7 @@ import requests, zipfile, StringIO
 def _collect_data():
 
     r = requests.get('https://ti.arc.nasa.gov/c/6/', stream=True)
-    z = zipfile.ZipFile(StringIO.StringIO(r.content))
+    z = zipfile.ZipFile(StringIO(r.content))
     z.extractall()
 
     train = pd.read_csv('train_FD001.csv', parse_dates=False, delimiter=" ", decimal=".", header=None)

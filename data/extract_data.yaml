@@ -2,14 +2,14 @@ name: Read Data Function
 description: Read NASA machine data from local system
 
 outputs:
-- {name: Data, type: GCSPath, description: 'Path where data will be stored.'}
+- {name: all_datasets, type: LocalPath, description: 'Path where data will be stored.'}
 
 implementation:
   container:
-    image: gcr.io/ideate/gcp-kubeflow-rul:extract_data
+    image: gcr.io/ideate-2021/gcp-kubeflow-rul/extract_data:latest
     command: [
       python, extract_data_rul.py,
 
-      --data,
-      {outputPath: Data},
+      --output_data,
+      {outputPath: 'all_datasets'},
     ]

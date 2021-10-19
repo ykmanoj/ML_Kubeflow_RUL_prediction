@@ -11,10 +11,10 @@ import argparse
 import pickle
 from pathlib import Path
 
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
-from sklearn.linear_model import LogisticRegression
 
-def _logistic_regression(args):
+def _random_forest_classification(args):
 
     # Open and reads file "data"
     print(args.data)
@@ -27,7 +27,7 @@ def _logistic_regression(args):
     y_test = data['y_test']
     
     # Initialize and train the model
-    model = LogisticRegression()
+    model = RandomForestClassifier()
     model.fit(x_train, y_train)
 
     # Get predictions
@@ -54,4 +54,4 @@ if __name__ == '__main__':
     # Creating the directory where the output file will be created (the directory may or may not exist).
     Path(args.accuracy).parent.mkdir(parents=True, exist_ok=True)
     
-    _logistic_regression(args)
+    _random_forest_classification(args)

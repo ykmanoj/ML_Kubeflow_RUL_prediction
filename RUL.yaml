@@ -1,0 +1,104 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: turbofan-engine-pipeline-
+  annotations: {pipelines.kubeflow.org/kfp_sdk_version: 1.8.5, pipelines.kubeflow.org/pipeline_compilation_time: '2021-10-18T12:04:04.226033',
+    pipelines.kubeflow.org/pipeline_spec: '{"description": "Apply LSTM to find Remaining
+      useful life.", "name": "Turbofan Engine Pipeline"}'}
+  labels: {pipelines.kubeflow.org/kfp_sdk_version: 1.8.5}
+spec:
+  entrypoint: turbofan-engine-pipeline
+  templates:
+  - name: logistic-regression-classifier
+    container:
+      args: []
+      command: [python, logistic_regression_rul.py, --data, /tmp/inputs/Data/data,
+        --accuracy, /tmp/outputs/Accuracy/data]
+      image: gcr.io/ideate/gcp-kubeflow-rul:lr
+    inputs:
+      artifacts:
+      - {name: process-data-processed_data, path: /tmp/inputs/Data/data}
+    outputs:
+      artifacts:
+      - {name: logistic-regression-classifier-Accuracy, path: /tmp/outputs/Accuracy/data}
+    metadata:
+      labels:
+        pipelines.kubeflow.org/kfp_sdk_version: 1.8.5
+        pipelines.kubeflow.org/pipeline-sdk-type: kfp
+        pipelines.kubeflow.org/enable_caching: "true"
+      annotations: {pipelines.kubeflow.org/component_spec: '{"description": "Trains
+          a Logistic Regression Classifier", "implementation": {"container": {"command":
+          ["python", "logistic_regression_rul.py", "--data", {"inputPath": "Data"},
+          "--accuracy", {"outputPath": "Accuracy"}], "image": "gcr.io/ideate/gcp-kubeflow-rul:lr"}},
+          "inputs": [{"description": "Path where data is stored.", "name": "Data",
+          "type": "LocalPath"}], "name": "Logistic Regression Classifier", "outputs":
+          [{"description": "Accuracy metric", "name": "Accuracy", "type": "Float"}]}',
+        pipelines.kubeflow.org/component_ref: '{"digest": "986f1633fc5714c5ee7b69c859a69c804bb52453b6090393d8cbebefb17e6e3d",
+          "url": "lr/logistic_regression.yaml"}'}
+  - name: process-data
+    container:
+      args: []
+      command: [python, process_data_rul.py, --input_data, /tmp/inputs/all_datasets/data,
+        --output_data, /tmp/outputs/processed_data/data]
+      image: gcr.io/ideate-2021/gcp-kubeflow-rul/process_data:latest
+    inputs:
+      artifacts:
+      - {name: read-data-function-all_datasets, path: /tmp/inputs/all_datasets/data}
+    outputs:
+      artifacts:
+      - {name: process-data-processed_data, path: /tmp/outputs/processed_data/data}
+    metadata:
+      labels:
+        pipelines.kubeflow.org/kfp_sdk_version: 1.8.5
+        pipelines.kubeflow.org/pipeline-sdk-type: kfp
+        pipelines.kubeflow.org/enable_caching: "true"
+      annotations: {pipelines.kubeflow.org/component_spec: '{"description": "Prepares
+          the train & test data and performs scaling", "implementation": {"container":
+          {"command": ["python", "process_data_rul.py", "--input_data", {"inputPath":
+          "all_datasets"}, "--output_data", {"outputPath": "processed_data"}], "image":
+          "gcr.io/ideate-2021/gcp-kubeflow-rul/process_data:latest"}}, "inputs": [{"description":
+          "Path where input data is stored.", "name": "all_datasets", "type": "LocalPath"}],
+          "name": "Process data", "outputs": [{"description": "Path where output data
+          is stored", "name": "processed_data", "type": "LocalPath"}]}', pipelines.kubeflow.org/component_ref: '{"digest":
+          "0459043f13fac6fc0cbb63fbc859b040958d6f1e3e9924fef509c8089fee5b20", "url":
+          "./preprocess/process_data.yaml"}'}
+  - name: read-data-function
+    container:
+      args: []
+      command: [python, extract_data_rul.py, --output_data, /tmp/outputs/all_datasets/data]
+      image: gcr.io/ideate-2021/gcp-kubeflow-rul/extract_data:latest
+    outputs:
+      artifacts:
+      - {name: read-data-function-all_datasets, path: /tmp/outputs/all_datasets/data}
+    metadata:
+      labels:
+        pipelines.kubeflow.org/kfp_sdk_version: 1.8.5
+        pipelines.kubeflow.org/pipeline-sdk-type: kfp
+        pipelines.kubeflow.org/enable_caching: "true"
+      annotations: {pipelines.kubeflow.org/component_spec: '{"description": "Read
+          NASA machine data from local system", "implementation": {"container": {"command":
+          ["python", "extract_data_rul.py", "--output_data", {"outputPath": "all_datasets"}],
+          "image": "gcr.io/ideate-2021/gcp-kubeflow-rul/extract_data:latest"}}, "name":
+          "Read Data Function", "outputs": [{"description": "Path where data will
+          be stored.", "name": "all_datasets", "type": "LocalPath"}]}', pipelines.kubeflow.org/component_ref: '{"digest":
+          "a895156088711bed46a53a8c6909158957414b8a4919f43c9540f774e4306412", "url":
+          "./data/extract_data.yaml"}'}
+  - name: turbofan-engine-pipeline
+    dag:
+      tasks:
+      - name: logistic-regression-classifier
+        template: logistic-regression-classifier
+        dependencies: [process-data]
+        arguments:
+          artifacts:
+          - {name: process-data-processed_data, from: '{{tasks.process-data.outputs.artifacts.process-data-processed_data}}'}
+      - name: process-data
+        template: process-data
+        dependencies: [read-data-function]
+        arguments:
+          artifacts:
+          - {name: read-data-function-all_datasets, from: '{{tasks.read-data-function.outputs.artifacts.read-data-function-all_datasets}}'}
+      - {name: read-data-function, template: read-data-function}
+  arguments:
+    parameters: []
+  serviceAccountName: pipeline-runner

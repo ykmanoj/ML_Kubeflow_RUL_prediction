@@ -1,3 +1,6 @@
 sklearn
 numpy
 pandas
+kfp
+path
+#tensorflow

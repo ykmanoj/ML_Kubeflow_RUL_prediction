@@ -1,4 +1,4 @@
 pandas
-StringIO
-zipfile
-requests
+kfp
+path
+#tensorflow
